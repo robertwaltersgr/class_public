@@ -14,3 +14,9 @@ RealSpaceInterface/cache/
 .DS_Store
 doc/manual/html
 doc/manual/latex
+
+# local build/analysis artifacts
+*.so
+*.egg-info/
+*.npy
+*.npz
