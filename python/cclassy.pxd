@@ -336,7 +336,10 @@ cdef extern from "class.h":
         int has_tt
         int has_te
         int has_ee
+        int has_xx #RCW 10/22
         int has_bb
+        int has_eb #RCW 10/15
+        int has_tb #RCW 10/15
         int has_pp
         int has_tp
         int has_dd
@@ -355,7 +358,10 @@ cdef extern from "class.h":
         int index_ct_tt
         int index_ct_te
         int index_ct_ee
+        int index_ct_xx #RCW 10/22
         int index_ct_bb
+        int index_ct_eb #RCW 10/15
+        int index_ct_tb #RCW 10/15
         int index_ct_pp
         int index_ct_tp
         int index_ct_dd

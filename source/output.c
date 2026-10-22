@@ -1761,8 +1761,11 @@ int output_open_cl_file(
     if (pop->output_format == class_format) {
       class_fprintf_columntitle(*clfile,"TT",phr->has_tt,colnum);
       class_fprintf_columntitle(*clfile,"EE",phr->has_ee,colnum);
+      class_fprintf_columntitle(*clfile,"XX",phr->has_xx,colnum); /*RCW (10/22): updated for XX channel*/
       class_fprintf_columntitle(*clfile,"TE",phr->has_te,colnum);
       class_fprintf_columntitle(*clfile,"BB",phr->has_bb,colnum);
+      class_fprintf_columntitle(*clfile,"EB",phr->has_eb,colnum); /*RCW (10/15): updated has eb and tb for column name*/
+      class_fprintf_columntitle(*clfile,"TB",phr->has_tb,colnum);
       class_fprintf_columntitle(*clfile,"phiphi",phr->has_pp,colnum);
       class_fprintf_columntitle(*clfile,"TPhi",phr->has_tp,colnum);
       class_fprintf_columntitle(*clfile,"Ephi",phr->has_ep,colnum);
@@ -1770,8 +1773,11 @@ int output_open_cl_file(
     else if (pop->output_format == camb_format) {
       class_fprintf_columntitle(*clfile,"TT",phr->has_tt,colnum);
       class_fprintf_columntitle(*clfile,"EE",phr->has_ee,colnum);
+      class_fprintf_columntitle(*clfile,"XX",phr->has_xx,colnum); /*RCW (10/22): updated for XX channel*/
       class_fprintf_columntitle(*clfile,"BB",phr->has_bb,colnum);
       class_fprintf_columntitle(*clfile,"TE",phr->has_te,colnum);
+      class_fprintf_columntitle(*clfile,"EB",phr->has_eb,colnum); /*RCW (10/15): updated has eb and tb for column name and CAMB type*/
+      class_fprintf_columntitle(*clfile,"TB",phr->has_tb,colnum);
       class_fprintf_columntitle(*clfile,"dd",phr->has_pp,colnum);
       class_fprintf_columntitle(*clfile,"dT",phr->has_tp,colnum);
       class_fprintf_columntitle(*clfile,"dE",phr->has_ep,colnum);
@@ -1875,8 +1881,11 @@ int output_one_line_of_cl(
   if (pop->output_format == camb_format) {
     class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_tt], phr->has_tt);
     class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_ee], phr->has_ee);
+    class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_xx], phr->has_xx); /*RCW (10/22) updating for has_xx and xx*/
     class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_bb], phr->has_bb);
     class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_te], phr->has_te);
+    class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_eb], phr->has_eb); /*RCW (10/15) updating for has_eb and tb*/
+    class_fprintf_double(clfile, factor*pow(pba->T_cmb*1.e6,2)*cl[phr->index_ct_tb], phr->has_tb);
     class_fprintf_double(clfile, l*(l+1)*factor*cl[phr->index_ct_pp], phr->has_pp);
     class_fprintf_double(clfile, sqrt(l*(l+1))*factor*pba->T_cmb*1.e6*cl[phr->index_ct_tp], phr->has_tp);
     class_fprintf_double(clfile, sqrt(l*(l+1))*factor*pba->T_cmb*1.e6*cl[phr->index_ct_ep], phr->has_ep);
@@ -1885,10 +1894,16 @@ int output_one_line_of_cl(
       index_ct_rest++;
     if (phr->has_ee == _TRUE_)
       index_ct_rest++;
+    if (phr->has_xx == _TRUE_) /*RCW (10/22) updating for has_xx and xx*/
+      index_ct_rest++;
     if (phr->has_bb == _TRUE_)
       index_ct_rest++;
     if (phr->has_te == _TRUE_)
       index_ct_rest++;
+    if (phr->has_eb == _TRUE_) /*RCW (10/15) incrementing for eb and tb*/
+      index_ct_rest++;
+    if (phr->has_tb == _TRUE_)
+      index_ct_rest++; 
     if (phr->has_pp == _TRUE_)
       index_ct_rest++;
     if (phr->has_tp == _TRUE_)

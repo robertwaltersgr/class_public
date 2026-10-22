@@ -772,7 +772,7 @@ cdef class Class:
         cl : dict
             Dictionary that contains the unlensed power spectrum for each auto-correlation and cross-correlation spectrum,
             as well the corresponding mutipoles l. The keys of the dictionary are: 'ell' for the multipoles,
-            and 'tt', 'ee', 'te', 'bb', 'pp', 'tp' for each spectrum type.
+            and 'tt', 'ee', 'xx', 'te', 'bb', 'eb', 'tb' 'pp', 'tp' for each spectrum type.
         """
         self.compute(["harmonic"])
         cdef int lmaxR
@@ -783,8 +783,11 @@ cdef class Class:
         has_flags = [
             (self.hr.has_tt, self.hr.index_ct_tt, 'tt'),
             (self.hr.has_ee, self.hr.index_ct_ee, 'ee'),
+            (self.hr.has_xx, self.hr.index_ct_xx, 'xx'), #RCW (10/22)
             (self.hr.has_te, self.hr.index_ct_te, 'te'),
             (self.hr.has_bb, self.hr.index_ct_bb, 'bb'),
+            (self.hr.has_eb, self.hr.index_ct_eb, 'eb'), #RCW(10/15)
+            (self.hr.has_tb, self.hr.index_ct_tb, 'tb'), #RCW (10/15)
             (self.hr.has_pp, self.hr.index_ct_pp, 'pp'),
             (self.hr.has_tp, self.hr.index_ct_tp, 'tp'),]
         spectra = []

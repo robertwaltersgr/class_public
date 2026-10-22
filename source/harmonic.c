@@ -437,6 +437,15 @@ int harmonic_indices(
       phr->has_ee = _FALSE_;
     }
 
+    if (ppt->has_cl_cmb_polarization == _TRUE_) { /*RCW (10/22): adding X channel */
+      phr->has_xx = _TRUE_;
+      phr->index_ct_xx=index_ct;
+      index_ct++;
+    }
+    else {
+      phr->has_xx = _FALSE_;
+    }
+
     if ((ppt->has_cl_cmb_temperature == _TRUE_) &&
         (ppt->has_cl_cmb_polarization == _TRUE_)) {
       phr->has_te = _TRUE_;
@@ -455,7 +464,23 @@ int harmonic_indices(
     else {
       phr->has_bb = _FALSE_;
     }
+    if (ppt->has_cl_cmb_polarization == _TRUE_) {
+      phr->has_eb = _TRUE_;
+     phr->index_ct_eb = index_ct++;
+    }
+    else {
+      phr->has_eb = _FALSE_;
+    }
 
+    if ((ppt->has_cl_cmb_temperature == _TRUE_) &&
+        (ppt->has_cl_cmb_polarization == _TRUE_)) {
+     phr->has_tb = _TRUE_;
+     phr->index_ct_tb = index_ct++;
+    }
+    else {
+     phr->has_tb = _FALSE_;
+    }
+    /*RCW (10/15): We have now invoked the "turn on" statements for has_bb and has_tb and count the correct addition of that "channel"*/
     /* types of C_l's relevant only for scalars: phi-phi, T-phi, E-phi, d-d, T-d */
 
     if ((ppt->has_cl_cmb_lensing_potential == _TRUE_) && (ppt->has_scalars == _TRUE_)) {
@@ -581,11 +606,14 @@ int harmonic_indices(
 
       if (phr->has_tt == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_tt] = ppt->l_scalar_max;
       if (phr->has_ee == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_ee] = ppt->l_scalar_max;
+      if (phr->has_xx == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_xx] = ppt->l_scalar_max; /*RCW (10/22) adding ct_xx*/
       if (phr->has_te == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_te] = ppt->l_scalar_max;
       if (phr->has_pp == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_pp] = ppt->l_scalar_max;
       if (phr->has_tp == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_tp] = ppt->l_scalar_max;
       if (phr->has_ep == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_ep] = ppt->l_scalar_max;
-
+      if (phr->has_bb == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_bb] = ppt->l_scalar_max; /*RCW (10/15) adding ct_bb*/
+      if (phr->has_eb == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_eb] = ppt->l_scalar_max; /*RCW (10/15) adding ct_eb*/
+      if (phr->has_tb == _TRUE_) phr->l_max_ct[ppt->index_md_scalars][phr->index_ct_tb] = ppt->l_scalar_max;
       /* spectra computed up to l_lss_max */
 
       if (phr->has_dd == _TRUE_)
@@ -632,8 +660,11 @@ int harmonic_indices(
 
       if (phr->has_tt == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_tt] = ppt->l_vector_max;
       if (phr->has_ee == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_ee] = ppt->l_vector_max;
+      if (phr->has_xx == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_xx] = ppt->l_vector_max; /*RCW (10/22) adding ct_xx*/
       if (phr->has_te == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_te] = ppt->l_vector_max;
       if (phr->has_bb == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_bb] = ppt->l_vector_max;
+      if (phr->has_eb == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_eb] = ppt->l_vector_max; /*RCW: (10/15) while not necessary, also adding these for vectors and tensors*/
+      if (phr->has_tb == _TRUE_) phr->l_max_ct[ppt->index_md_vectors][phr->index_ct_tb] = ppt->l_vector_max; /*RCW: (10/15)*/
     }
 
     if (ppt->has_tensors == _TRUE_) {
@@ -642,8 +673,11 @@ int harmonic_indices(
 
       if (phr->has_tt == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_tt] = ppt->l_tensor_max;
       if (phr->has_ee == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_ee] = ppt->l_tensor_max;
+      if (phr->has_xx == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_xx] = ppt->l_tensor_max; /*RCW (10/22) adding ct_xx*/
       if (phr->has_te == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_te] = ppt->l_tensor_max;
       if (phr->has_bb == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_bb] = ppt->l_tensor_max;
+      if (phr->has_eb == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_eb] = ppt->l_tensor_max; /*RCW: (10/15) while not necessary, also adding these for vectors and tensors*/
+      if (phr->has_tb == _TRUE_) phr->l_max_ct[ppt->index_md_tensors][phr->index_ct_tb] = ppt->l_tensor_max; /*RCW: (10/15)*/
     }
 
     /* maximizations */
@@ -1080,8 +1114,8 @@ int harmonic_compute_cl(
        related to initial conditions for tensors.
 
     */
-
-    factor = 4. * _PI_ / k; //fudge factor, CHANGE ME
+    /*RCW: This is the integrqation part now. Don't get scared... */
+    factor = 4. * _PI_ / k; /*RCW: CHANGE ME to give a fudge factor */
 
     if (phr->has_tt == _TRUE_)
       cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_tt]=
@@ -1097,11 +1131,39 @@ int harmonic_compute_cl(
         * transfer_ic2[ptr->index_tt_e]
         * factor;
 
+    if (phr->has_xx == _TRUE_) /*RCW (10/22) adding cl_xx*/
+      cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_xx]=
+        primordial_pk[index_ic1_ic2]
+        * transfer_ic1[ptr->index_tt_x] /*RCW change fudge factor*/
+        * transfer_ic2[ptr->index_tt_x] /*RCW change fudge factor*/
+        * factor;
+
     if (phr->has_te == _TRUE_)
       cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_te]=
         primordial_pk[index_ic1_ic2]
         * 0.5*(transfer_ic1_temp * transfer_ic2[ptr->index_tt_e] +
                transfer_ic1[ptr->index_tt_e] * transfer_ic2_temp)
+        * factor;
+    
+    if (_scalars_ && (phr->has_bb == _TRUE_)) /*RCW: (10/15) essentially copying the vectors statement below, we adopt for scalar +bb*/
+      cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_bb]=
+        primordial_pk[index_ic1_ic2]
+        * transfer_ic1[ptr->index_tt_scalar_b]
+        * transfer_ic2[ptr->index_tt_scalar_b]
+        * factor;
+    
+    if (_scalars_ && (phr->has_eb == _TRUE_)) /*RCW: (10/15) again we add scalars && eb, following the convention of has_te */
+      cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_eb] =
+        primordial_pk[index_ic1_ic2]
+        * 0.5 * (transfer_ic1[ptr->index_tt_e] * transfer_ic2[ptr->index_tt_scalar_b]
+              + transfer_ic1[ptr->index_tt_scalar_b]* transfer_ic2[ptr->index_tt_e])
+       * factor;
+
+    if (_scalars_ && (phr->has_tb == _TRUE_)) /*RCW: (10/15) again we add scalars && tb, following the convention of has_te */
+      cl_integrand[index_q*cl_integrand_num_columns+1+phr->index_ct_tb] =
+        primordial_pk[index_ic1_ic2]
+        * 0.5 * (transfer_ic1_temp * transfer_ic2[ptr->index_tt_scalar_b]
+              + transfer_ic1[ptr->index_tt_scalar_b] * transfer_ic2_temp)
         * factor;
 
     if (_vectors_ && (phr->has_bb == _TRUE_))
@@ -1268,8 +1330,8 @@ int harmonic_compute_cl(
        etc. The current version neglects the tiny contribution of
        vector and tensor modes to lensing and galaxy density/number
        count */
-
-    if ((_scalars_ && (phr->has_bb == _TRUE_) && (index_ct == phr->index_ct_bb)) ||
+      /*RCW (10/15): from the description above we should want to disale the null spectra for scalars*/
+    if (/*(_scalars_ && (phr->has_bb == _TRUE_) && (index_ct == phr->index_ct_bb)) || */ /*RCW (10/15): this is now commented out*/
         (_tensors_ && (phr->has_pp == _TRUE_) && (index_ct == phr->index_ct_pp)) ||
         (_tensors_ && (phr->has_tp == _TRUE_) && (index_ct == phr->index_ct_tp)) ||
         (_tensors_ && (phr->has_ep == _TRUE_) && (index_ct == phr->index_ct_ep)) ||

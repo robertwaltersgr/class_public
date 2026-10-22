@@ -143,6 +143,8 @@ struct perturbations
   short has_iso_v;   /**< do we need isocurvature vector mode? */
   short has_oct_v;   /**< do we need (neutrino) octupole vector mode? */
 
+  short has_birefringence; /**RCW (10/14): adding a turn on/off switch < do we need to consider birefringence? */
+  double beta_dot; /**RCW (10/14): adding a beta_dot parameter for birefringence, so it can be read into transfer.c as well */
   /* perturbed recombination */
   /** Do we want to consider perturbed temperature and ionization fraction? */
   short has_perturbed_recombination;
@@ -316,7 +318,8 @@ struct perturbations
   short has_source_eta_prime;  /**< do we need source for metric fluctuation eta'? */
   short has_source_H_T_Nb_prime; /**< do we need source for metric fluctuation H_T_Nb'? */
   short has_source_k2gamma_Nb; /**< do we need source for metric fluctuation gamma in Nbody gauge? */
-
+  short has_source_pB;       /**RCW (10/14): added for perturbations in new B channel < do we need source for polarization B? */
+  short has_source_x;      /**< RCW 10/22: added for perturbations in new X channel */
   short has_source_vector_theta_g;    /**< do we need source for theta of gammas for vector mode ? */
   short has_source_vector_theta_b;    /**< do we need source for theta of baryons for vector modes ? */
   short has_source_vector_theta_ur;   /**< do we need source for theta of ultra-relativistic neutrinos/relics for vector modes ? */
@@ -378,6 +381,8 @@ struct perturbations
   int index_tp_vector_theta_ur; /**< index value for theta of ur species for vector modes */
   int index_tp_V;               /**< index value for metric fluctuation V (vector mode) */
 
+  int index_tp_pB;               /**RCW (10/14): < index value for polarization B (scalar mode) */
+  int index_tp_x;               /**< RCW 10/22: < index value for polarization X (scalar mode) */
   int * tp_size; /**< number of types tp_size[index_md] included in computation for each mode */
 
   //@}

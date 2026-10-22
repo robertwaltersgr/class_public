@@ -507,6 +507,7 @@ int transfer_indices(
 
   class_define_index(ptr->index_tt_t2,ppt->has_cl_cmb_temperature, index_tt,1);
   class_define_index(ptr->index_tt_e, ppt->has_cl_cmb_polarization,index_tt,1);
+  class_define_index(ptr->index_tt_x, ppt->has_cl_cmb_polarization,index_tt,1); /*RCW 10/22: added index_tt_x for X channel */
 
   index_tt_common=index_tt;
 
@@ -530,7 +531,7 @@ int transfer_indices(
     class_define_index(ptr->index_tt_nc_g4,  ppt->has_nc_gr,                   index_tt,ppt->selection_num);
     class_define_index(ptr->index_tt_nc_g5,  ppt->has_nc_gr,                   index_tt,ppt->selection_num);
     class_define_index(ptr->index_tt_lensing,ppt->has_cl_lensing_potential,    index_tt,ppt->selection_num);
-
+    class_define_index(ptr->index_tt_scalar_b, ppt->has_cl_cmb_polarization, index_tt, 1); /*RCW (10/15):  */
     ptr->tt_size[ppt->index_md_scalars]=index_tt;
 
   }
@@ -968,6 +969,12 @@ int transfer_get_l_list(
           l_max=ppt->l_scalar_max;
 
         if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_e))
+          l_max=ppt->l_scalar_max;
+
+        if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_x)) /*RCW (10/22): adding the indexing for index_tt_x */
+          l_max=ppt->l_scalar_max;
+
+        if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_scalar_b)) /*RCW (10/15): adding the indexing for index_tt_scalar_b */
           l_max=ppt->l_scalar_max;
 
         if ((ppt->has_cl_cmb_lensing_potential == _TRUE_) && (index_tt == ptr->index_tt_lcmb))
@@ -1528,6 +1535,12 @@ int transfer_get_source_correspondence(
 
         if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_e))
           tp_of_tt[index_md][index_tt]=ppt->index_tp_p;
+        
+        if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_x)) /*RCW (10/22): following index_tt_e and matching with index_tp_x (look at SCALAR POLARIZATION E choice below) */
+          tp_of_tt[index_md][index_tt]=ppt->index_tp_x;
+
+        if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_scalar_b)) /*RCW (10/15): following index_tt_e and matching with index_tp_p (look at SCALAR POLARIZATION E choice below) */
+          tp_of_tt[index_md][index_tt]=ppt->index_tp_p;
 
         if ((ppt->has_cl_cmb_lensing_potential == _TRUE_) && (index_tt == ptr->index_tt_lcmb))
           tp_of_tt[index_md][index_tt]=ppt->index_tp_phi_plus_psi;
@@ -1718,6 +1731,14 @@ int transfer_source_tau_size(
 
     /* scalar polarization */
     if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_e))
+      *tau_size = ppt->tau_size;
+
+    /* scalar X-mode polarization */ /*RCW (10/22): adding the indexing for index_tt_x */
+    if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_x))
+      *tau_size = ppt->tau_size;
+
+      /* cmb scalar B-mode polarization */ /*RCW (10/15): adding the indexing for index_tt_scalar_b */
+    if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_scalar_b))
       *tau_size = ppt->tau_size;
 
     /* cmb lensing potential */
@@ -2748,7 +2769,7 @@ int transfer_sources(
            interpolated_sources,
            ppt->tau_size*sizeof(double));
 
-    /* store values of (tau0-tau) */
+  /* store values of (tau0-tau) */
     for (index_tau=0; index_tau < ppt->tau_size; index_tau++) {
       tau0_minus_tau[index_tau] = tau0 - ppt->tau_sampling[index_tau];
     }
@@ -4079,6 +4100,8 @@ int transfer_can_be_neglected(
     else if ((ppt->has_cl_cmb_temperature == _TRUE_) && (index_tt == ptr->index_tt_t2) && (l < (k-ppr->transfer_neglect_delta_k_S_t2)*ra_rec)) *neglect = _TRUE_;
 
     else if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_e) && (l < (k-ppr->transfer_neglect_delta_k_S_e)*ra_rec)) *neglect = _TRUE_;
+   
+    else if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_x) && (l < (k-ppr->transfer_neglect_delta_k_S_e)*ra_rec)) *neglect = _TRUE_; /*RCW (10/22) adding scalar neglect condition just copying delta_k_s_e bc I don't know what it does*/
 
   }
 
@@ -4132,6 +4155,14 @@ int transfer_late_source_can_be_neglected(
       }
       if (ppt->has_cl_cmb_polarization == _TRUE_) {
         if (index_tt == ptr->index_tt_e)
+          *neglect = _TRUE_;
+      }
+      if (ppt->has_cl_cmb_polarization == _TRUE_) { /*RCW (10/22): adding the indexing for index_tt_x */
+        if (index_tt == ptr->index_tt_x)
+          *neglect = _TRUE_;
+      }
+      if (ppt->has_cl_cmb_polarization == _TRUE_) { /*RCW (10/15): copying wherever index_tt_e is used */
+        if (index_tt == ptr->index_tt_scalar_b)
           *neglect = _TRUE_;
       }
     }
@@ -4469,7 +4500,12 @@ int transfer_select_radial_function(
       if (index_tt == ptr->index_tt_e) {
         *radial_type = SCALAR_POLARISATION_E;
       }
-
+      if (index_tt == ptr->index_tt_x) { /*RCW (10/22): adding the indexing for index_tt_x */
+        *radial_type = SCALAR_POLARISATION_E;
+      }
+      if (index_tt == ptr->index_tt_scalar_b) { /*RCW (10/15): Ok, here is the true implementation of B mode signal coming from rotating E modes.*/
+        *radial_type = SCALAR_POLARISATION_E; /*(10/15): I believe it is important to keep as _E since its all the same projection kernel, which differs from tensors, but transfer.h has a note about this*/
+      }
     }
 
     if (_index_tt_in_range_(ptr->index_tt_d1,      ppt->selection_num, ppt->has_nc_rsd))

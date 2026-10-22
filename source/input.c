@@ -1847,7 +1847,7 @@ int input_read_parameters_general(struct file_content * pfc,
     class_test(flag1==_FALSE_,
                errmsg, "The options for output are {'tCl','pCl','lCl','nCl','dCl','sCl','mPk','mTk','dTk','vTk','Sd','wTk'}, you entered '%s'",string1);
   }
-
+class_read_double("beta_dot", ppt->beta_dot); /*RCW (10/15): adding ppt-> beta_dot so it can be read from .ini file  */
   /** 1.a) Terms contributing to the temperature spectrum */
   if (ppt->has_cl_cmb_temperature == _TRUE_) {
     /* Read */
@@ -5840,6 +5840,7 @@ int input_default_params(struct background *pba,
   ppt->switch_lisw = 1;
   ppt->switch_dop = 1;
   ppt->switch_pol = 1;
+  ppt->beta_dot = 0.; /*RCW (10/15): GPT suggested add to set input.c default for beta_dot, so it can be read into transfer.c, perturbations.c*/
   /** 1.a.1) Split value of redshift z at which the isw is considered as late or early */
   ppt->eisw_lisw_split_z = 120;
   /** 1.b) 'nCl' (or 'dCl') case */
