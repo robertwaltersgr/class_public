@@ -605,6 +605,12 @@ int background_functions(
   /** - compute relativistic density to total density ratio */
   pvecback[pba->index_bg_Omega_r] = rho_r / rho_crit;
 
+  /** - birefringence: conformal-time derivative of beta, beta' = g*phi'/2 (RCW 10/29).
+      Needs phi' from the scalar field, hence computed after the scf block. */
+  /**if (pba->has_birefringence == _TRUE_) {
+    pvecback[pba->index_bg_beta_dot] = 0.5*pba->birefringence_g*pvecback_B[pba->index_bi_phi_prime_scf];
+  } */
+
   /** - compute other quantities in the exhaustive, redundant format */
   if (return_format == long_info) {
 
@@ -625,6 +631,11 @@ int background_functions(
 
     /** - velocity growth factor */
     pvecback[pba->index_bg_f] = pvecback_B[pba->index_bi_D_prime]/( pvecback_B[pba->index_bi_D]*a*pvecback[pba->index_bg_H]);
+
+    /** - birefringence angle (Dbeta = beta_0 - beta is filled in background_solve(), once beta_0 is known) */
+    /**if (pba->has_birefringence == _TRUE_) {
+      pvecback[pba->index_bg_beta] = pvecback_B[pba->index_bi_beta];
+    } */
 
     /**- Varying fundamental constants */
     if (pba->has_varconst == _TRUE_) {
@@ -749,6 +760,34 @@ int background_w_fld(
 
   return _SUCCESS_;
 }
+/**RCW 11/9: Adding alpha sample function*/
+double background_alpha(
+                        struct background *pba, 
+                        double tau, 
+                        double tau0) {
+                          /*alpha is an integrated function that is basically our Beta (conformal_age)
+                          alpha(tau, tau0) = A/L [ sin(L*tau)/tau - sin(L*tau0)/tau0 ]*/
+  double A = pba->birefringence_A; /**call in constant A */
+  double L = pba->birefringence_L; /** call in constant L */
+  double f  = (tau  > 0.) ? sin(L*tau )/tau  : L;   /* limit case for if tau goes to 0 -> f = A (suggested by Claude code)*/
+  double f0 = (tau0 > 0.) ? sin(L*tau0)/tau0 : L;   /* alpha(tau, tau0)= A/L (f-f0)*/
+  return (A/L)*(f - f0);
+}
+/*RCW 11/9: Adding beta_dot sample function*/
+double background_beta_dot(
+                          struct background *pba,
+                           double tau) {
+                            /*beta_dot = -d alpha/ d tau = 
+                            -A[cos(L*tau)/tau - sin(L*tau)/(L*tau^2)]*/
+
+  double A = pba->birefringence_A; /*call in constant A */
+  double L = pba->birefringence_L;  /*call in constant L */
+  double x = L*tau; /*placeholder*/
+  if (x < 1.e-3)               /* series: cos(x)/tau - sin(x)/(L tau^2) ~ -L^2 tau/3 (1 - x^2/10) */
+    return A*L*L*tau/3.*(1. - x*x/10.);  /*small angle approx to order x^4 */
+  return -A*(cos(x)/tau - sin(x)/(L*tau*tau));
+}
+/*RCW: 11/9 this is what can be pulled from perturbations.c*/
 
 /**
  * Single place where the variation of fundamental constants is
@@ -987,6 +1026,7 @@ int background_indices(
   pba->has_idr = _FALSE_;
   pba->has_curvature = _FALSE_;
   pba->has_varconst  = _FALSE_;
+  pba->has_birefringence = _FALSE_;
 
   if (pba->Omega0_cdm != 0.)
     pba->has_cdm = _TRUE_;
@@ -1002,6 +1042,8 @@ int background_indices(
     if (pba->Gamma_dcdm != 0.)
       pba->has_dr = _TRUE_;
   }
+  if (pba->birefringence_A != 0.)
+    pba->has_birefringence = _TRUE_; /*RCW 11/9: adding birefringence flag. Now birefringence_A can be hard coded to TURN ON*/
 
   if (pba->Omega0_scf != 0.)
     pba->has_scf = _TRUE_;
@@ -1023,6 +1065,10 @@ int background_indices(
 
   if (pba->varconst_dep != varconst_none)
     pba->has_varconst = _TRUE_;
+
+  /* birefringence is driven by the scalar field: beta' = g*phi'/2 */
+  /*if ((pba->birefringence_g != 0.) && (pba->has_scf == _TRUE_))
+    pba->has_birefringence = _TRUE_; */
 
   /** - initialize all indices */
 
@@ -1095,6 +1141,9 @@ int background_indices(
   /* - index for Omega_r (relativistic density fraction) */
   class_define_index(pba->index_bg_Omega_r,_TRUE_,index_bg,1);
 
+  /* - index for birefringence beta' (computed in normal_info) */
+  /*class_define_index(pba->index_bg_beta_dot,pba->has_birefringence,index_bg,1); */
+
   /* - index interacting for dark radiation */
   class_define_index(pba->index_bg_rho_idr,pba->has_idr,index_bg,1);
 
@@ -1141,6 +1190,10 @@ int background_indices(
   /* -> varying fundamental constant -- me (effective electron mass) */
   class_define_index(pba->index_bg_varc_me,pba->has_varconst,index_bg,1);
 
+  /* -> birefringence angle and beta_0-beta */
+  /*class_define_index(pba->index_bg_beta,pba->has_birefringence,index_bg,1); */
+  /*class_define_index(pba->index_bg_Dbeta,pba->has_birefringence,index_bg,1); */
+
   /* -> put here additional quantities describing background */
   /*    */
   /*    */
@@ -1184,6 +1237,8 @@ int background_indices(
   class_define_index(pba->index_bi_D,_TRUE_,index_bi,1);
   class_define_index(pba->index_bi_D_prime,_TRUE_,index_bi,1);
 
+  /* -> birefringence parameter */ /*RCW 10/29*/
+  /*class_define_index(pba->index_bi_beta,pba->has_birefringence,index_bi,1); */
 
   /* -> end of indices in the vector of variables to integrate */
   pba->bi_size = index_bi;
@@ -1897,6 +1952,8 @@ int background_solve(
   double loga_ini, loga_final;
   /* growth factor today */
   double D_today;
+  /* birefringence angle today */
+  /*double beta_today = 0.;*/
   /* indices for the different arrays */
   int index_loga, index_scf;
   /* what parameters are used in the output? */
@@ -1993,6 +2050,10 @@ int background_solve(
   }
   /* -> scale-invariant growth rate today */
   D_today = pvecback_integration[pba->index_bi_D];
+  /* -> birefringence angle today (beta_0), used to build Dbeta = beta_0 - beta */
+  /*if (pba->has_birefringence == _TRUE_) {
+    beta_today = pvecback_integration[pba->index_bi_beta];
+  }
 
   /** - In a loop over lines, fill rest of background table for
       quantities that depend on numbers like "conformal_age" or
@@ -2010,6 +2071,10 @@ int background_solve(
 
     pba->background_table[index_loga*pba->bg_size+pba->index_bg_ang_distance] = comoving_radius/(1.+pba->z_table[index_loga]);
     pba->background_table[index_loga*pba->bg_size+pba->index_bg_lum_distance] = comoving_radius*(1.+pba->z_table[index_loga]);
+
+    /**if (pba->has_birefringence == _TRUE_) {
+      pba->background_table[index_loga*pba->bg_size+pba->index_bg_Dbeta] = beta_today - pba->background_table[index_loga*pba->bg_size+pba->index_bg_beta];
+    } */
   }
 
   /** - fill tables of second derivatives (in view of spline interpolation) */
@@ -2255,6 +2320,11 @@ int background_initial_conditions(
     pvecback_integration[pba->index_bi_rho_fld] = rho_fld_today * exp(integral_fld);
 
   }
+  /* RCW 10/29: birefringence angle starts at zero; only differences beta_0-beta matter */
+  /**if (pba->has_birefringence == _TRUE_) {
+    pvecback_integration[pba->index_bi_beta] = 0.;
+  }
+
 
   /** - Fix initial value of \f$ \phi, \phi' \f$
    * set directly in the radiation attractor => fixes the units in terms of rho_ur
@@ -2480,6 +2550,10 @@ int background_output_titles(
   class_store_columntitle(titles,"rel. alpha",pba->has_varconst);
   class_store_columntitle(titles,"rel. m_e",pba->has_varconst);
 
+  /**class_store_columntitle(titles,"beta'",pba->has_birefringence);
+  class_store_columntitle(titles,"beta",pba->has_birefringence);
+  class_store_columntitle(titles,"beta_0-beta",pba->has_birefringence);
+  */
   return _SUCCESS_;
 }
 
@@ -2555,6 +2629,10 @@ int background_output_data(
 
     class_store_double(dataptr,pvecback[pba->index_bg_varc_alpha],pba->has_varconst,storeidx);
     class_store_double(dataptr,pvecback[pba->index_bg_varc_me],pba->has_varconst,storeidx);
+
+    /**class_store_double(dataptr,pvecback[pba->index_bg_beta_dot],pba->has_birefringence,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_beta],pba->has_birefringence,storeidx);
+    class_store_double(dataptr,pvecback[pba->index_bg_Dbeta],pba->has_birefringence,storeidx); **/
   }
 
   return _SUCCESS_;
@@ -2666,6 +2744,11 @@ int background_derivs(
     dy[pba->index_bi_phi_scf] = y[pba->index_bi_phi_prime_scf]/a/H;
     dy[pba->index_bi_phi_prime_scf] = - 2*y[pba->index_bi_phi_prime_scf] - a*dV_scf(pba,y[pba->index_bi_phi_scf])/H ;
   }
+
+  /**if (pba->has_birefringence == _TRUE_) {
+    /** - birefringence: \f$ d\beta/dloga = \beta'/(aH) \f$ (RCW 10/29) */
+    /**dy[pba->index_bi_beta] = pvecback[pba->index_bg_beta_dot]/a/H;
+  } */
 
   return _SUCCESS_;
 

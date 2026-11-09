@@ -123,8 +123,10 @@ struct background
   enum varconst_dependence varconst_dep; /**< dependence of the varying fundamental constants as a function of time */
   double varconst_transition_redshift; /**< redshift of transition between varied fundamental constants and normal fundamental constants in the 'varconst_instant' case*/
 
+  /**double birefringence_g; /**< scalar-photon coupling g for cosmic birefringence, beta' = g*phi'_scf/2 (RCW 10/29) */
+  double birefringence_A; /**< scalar integrated constant for sample A/Lsin(Ltau) RCW 11/9 > **/
+  double birefringence_L; /**< scalar integrated constant for sample A/Lsin(Ltau) RCW 11/9 > **/
   //@}
-
 
   /** @name - related parameters */
 
@@ -191,6 +193,7 @@ struct background
   int index_bg_p_tot_prime;   /**< Conf. time derivative of total pressure */
 
   int index_bg_Omega_r;       /**< relativistic density fraction (\f$ \Omega_{\gamma} + \Omega_{\nu r} \f$) */
+  /**int index_bg_beta_dot;      /**< conformal time derivative of the birefringence angle beta, beta' = g*phi'/2 (RCW 10/29) */
 
   /* end of vector in normal format, now quantities in long format */
 
@@ -207,6 +210,8 @@ struct background
 
   int index_bg_varc_alpha;    /**< value of fine structure constant in varying fundamental constants */
   int index_bg_varc_me;      /**< value of effective electron mass in varying fundamental constants */
+  /**int index_bg_beta;         /**< birefringence angle beta(tau) (RCW 10/29) */
+  /**int index_bg_Dbeta;        /**< beta_0 - beta(tau) (RCW 10/29) */
 
   int bg_size_short;  /**< size of background vector in the "short format" */
   int bg_size_normal; /**< size of background vector in the "normal format" */
@@ -263,6 +268,7 @@ struct background
   int index_bi_tau;     /**< {C} conformal time in Mpc */
   int index_bi_D;       /**< {C} scale independent growth factor D(a) for CDM perturbations. */
   int index_bi_D_prime; /**< {C} D satisfies \f$ [D''(\tau)=-aHD'(\tau)+3/2 a^2 \rho_M D(\tau) \f$ */
+  /**int index_bi_beta;    /**< {C} birefringence angle beta, integrated as dbeta/dloga = beta'/(aH) (RCW 10/29) */
 
   int bi_B_size;        /**< Number of {B} parameters */
   int bi_size;          /**< Number of {B}+{C} parameters */
@@ -291,6 +297,7 @@ struct background
   short has_idr;       /**< presence of interacting dark radiation? */
   short has_curvature; /**< presence of global spatial curvature? */
   short has_varconst;  /**< presence of varying fundamental constants? */
+  short has_birefringence; /**< presence of cosmic birefringence (g != 0 and scalar field present)? (RCW 10/29) */
 
   //@}
 
@@ -412,6 +419,10 @@ extern "C" {
                            enum vecback_format return_format,
                            double * pvecback
                            );
+
+  /* RCW 11/9: birefringence test functions */
+  double background_alpha(struct background *pba, double tau, double tau0);
+  double background_beta_dot(struct background *pba, double tau);
 
   int background_w_fld(
                        struct background * pba,

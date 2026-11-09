@@ -1348,9 +1348,12 @@ int perturbations_indices(
 
   if (ppt->has_cl_cmb_polarization == _TRUE_) {
     ppt->has_source_p = _TRUE_;
-    ppt->has_source_pB = _TRUE_; /*RCW: 10/15, we have included has_source_pB in header, and now implement when polarization will be turned on;*/
     ppt->has_source_x = _TRUE_; /*RCW: 10/22, we have included has_source_x in header, and now implement when X channel will be turned on;*/
     ppt->has_cmb = _TRUE_;
+    ppt->has_source_pB = _TRUE_;
+    /*if (pba->has_birefringence == _TRUE_) { /*RCW: 11/9: adding birefringence flag. Now birefringence_A can be hard coded to TURN ON*/
+     /*ppt->has_source_pB = _TRUE_; /*RCW: 10/15, we have included has_source_pB in header, and now implement when polarization will be turned on;*/
+    /*} */
   }
 /*RCW (10/15): here I think we need a if TRUE statement for has_birefringence... This add is a bit daunting so I am noting it here first*/
 
@@ -8516,11 +8519,11 @@ int perturbations_sources(
       }
 
     }
-/*RCW: 10/14 this is the start of following T and E to C_l's. E_2 goes thru P, and P from index_pt_E2 and shear_g line 8382*/
-/*RCW: this moves to transfer.c in the form of index_tp_p then to index_tt_e ~line 1530 transfer.c*/
-/*RCW: then this moves to scalar_polarisation_E in ~line 4343*/
-/*RCW: next, radial function is at transfer.c:4210 (these are the same structure as eq. C.3)*/
-/*RCW: finally, the harmonic.c:1070-1100 compute integrations, and thats where we get the EE and TE, calculated over k*/
+    /*RCW: 10/14 this is the start of following T and E to C_l's. E_2 goes thru P, and P from index_pt_E2 and shear_g line 8382*/
+    /*RCW: this moves to transfer.c in the form of index_tp_p then to index_tt_e ~line 1530 transfer.c*/
+    /*RCW: then this moves to scalar_polarisation_E in ~line 4343*/
+    /*RCW: next, radial function is at transfer.c:4210 (these are the same structure as eq. C.3)*/
+    /*RCW: finally, the harmonic.c:1070-1100 compute integrations, and thats where we get the EE and TE, calculated over k*/
     /* scalar polarization */
     if (ppt->has_source_p == _TRUE_) {
 
@@ -8528,8 +8531,17 @@ int perturbations_sources(
          should have a minus sign, as shown in Hu & White. We put a
          plus sign to comply with the 'historical convention'
          established in CMBFAST and CAMB. */
+      double beta = background_alpha(pba, tau, pba->conformal_age); /*RCW: 11/9 calling in alpha function from background.c*/
+      _set_source_(ppt->index_tp_p) = _SQRT6_ * g * P *cos(2.*beta); /*RCW: 11/9: adding birefringence term to E-mode source, cos(2beta) from background.c alpha*/; 
+    }
+    if (ppt->has_source_pB == _TRUE_) {
 
-      _set_source_(ppt->index_tp_p) = _SQRT6_ * g * P;
+      /* all gauges. Note that the correct formula for the E source
+         should have a minus sign, as shown in Hu & White. We put a
+         plus sign to comply with the 'historical convention'
+         established in CMBFAST and CAMB. */
+      double beta = background_alpha(pba, tau, pba->conformal_age); /*RCW: 11/9 calling in alpha function from background.c*/
+      _set_source_(ppt->index_tp_pB) = -_SQRT6_ * g * P *sin(2.*beta); /*RCW: 11/9: adding birefringence term to B-mode source, sin(2beta) from background.c alpha*/; 
     }
     if (ppt->has_source_x == _TRUE_) { /*RCW (10/22) adding X mode, copying tp_p for E mode*/
 
@@ -10038,7 +10050,10 @@ int perturbations_derivs(double tau,
                          ErrorMsg error_message
                          ) {
   /** Summary: */
-
+ /*printf("I'm in pert_derivs!\n"); /*RCW: 10/28: Print statement*/
+  /*printf("tau = %e\n", tau); /*RCW: 10/28: Print statement*/
+  /*printf("y[0] = %e\n", y[0]); /*RCW: 10/28: Print statement*/
+  /*printf("dy[0] = %e\n", dy[0]); /*RCW: 10/28: Print statement*/
   /** - define local variables */
 
   /* multipole */
@@ -10110,7 +10125,7 @@ int perturbations_derivs(double tau,
 
   /*RCW: declare beta_dot (10-14), =0 should be baseline test, but I'll change it as well to see if its implemented */
   /*RCW (10/15): also note that we need to define a la eq. 32, that beta_dot=g*phi_dot/2*/
-  /*double beta_dot =0.;
+  double beta_dot =0.;
   /** - rename the fields of the input structure (just to avoid heavy notations) */
 
   pppaw = (struct perturbations_parameters_and_workspace *)parameters_and_workspace;
@@ -10123,7 +10138,7 @@ int perturbations_derivs(double tau,
   pth = pppaw->pth;
   ppt = pppaw->ppt;
   ppw = pppaw->ppw;
-
+  /*printf("k = %e\n", k); /*RCW: 10/28: Print statement*/
   s_l = ppw->s_l;
 
   switch (ppt->hierarchy) {
@@ -10152,6 +10167,10 @@ int perturbations_derivs(double tau,
              pba->error_message,
              error_message);
 
+  /* RCW 11/9: calling in background_beta_dot from background.c */
+  if (pba->has_birefringence == _TRUE_) {
+    beta_dot = background_beta_dot(pba, tau);
+  }
   class_call(thermodynamics_at_z(pba,
                                  pth,
                                  1./pvecback[pba->index_bg_a]-1.,  /* redshift z=1/a-1 */
@@ -10606,10 +10625,10 @@ int perturbations_derivs(double tau,
         case tam:
           dy[pv->index_pt_E2] = -twokappam[3]/7.*y[pv->index_pt_E2+1]
             -photon_scattering_rate*(y[pv->index_pt_E2] + _SQRT6_*P0) 
-           -2.*ppt->beta_dot*y[pv->index_pt_B2]; /*RCW: adding -2beta_dot*y[pv->index_pt_B2] 10/13 Need to establish beta_dot*/
+           -2.*beta_dot*y[pv->index_pt_B2]; /*RCW: adding -2beta_dot*y[pv->index_pt_B2] 10/13 Need to establish beta_dot*/
           dy[pv->index_pt_B2] = -twokappam[3]/7.*y[pv->index_pt_B2+1]
             -photon_scattering_rate*y[pv->index_pt_B2]
-           +2.*ppt->beta_dot*y[pv->index_pt_E2]; /*RCW: adding scalar index_pt_B2 for eq. C.4 (10/13) need to establish beta_dot*/
+           +2.*beta_dot*y[pv->index_pt_E2]; /*RCW: adding scalar index_pt_B2 for eq. C.4 (10/13) need to establish beta_dot*/
           break;
         }
 
@@ -10632,12 +10651,12 @@ int perturbations_derivs(double tau,
             dy[pv->index_pt_E2+l-2] = twokappam[l]/(2.*l-1.)*y[pv->index_pt_E2+l-3]
 	          -twokappam[l+1]/(2.*l+3.)*y[pv->index_pt_E2+l-1]
               -photon_scattering_rate*y[pv->index_pt_E2+l-2]
-              -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW: adding -2.beta_dot*y[pv->index_pt_B2+l-2] ; matching C.4 higher l (10/13) Need to establish beta_dot*/
+              -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW: adding -2.beta_dot*y[pv->index_pt_B2+l-2] ; matching C.4 higher l (10/13) Need to establish beta_dot*/
           
           dy[pv->index_pt_B2+l-2] = twokappam[l]/(2.*l-1.)*y[pv->index_pt_B2+l-3] /*RCW*/
 	          -twokappam[l+1]/(2.*l+3.)*y[pv->index_pt_B2+l-1] /*RCW*/
               -photon_scattering_rate*y[pv->index_pt_B2+l-2] /*RCW*/
-              +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2]; /*RCW: Adding B_dot_l for l>3, copying down eq. C.4*/
+              +2.*beta_dot*y[pv->index_pt_E2+l-2]; /*RCW: Adding B_dot_l for l>3, copying down eq. C.4*/
               }
           break;
         }
@@ -10660,11 +10679,11 @@ int perturbations_derivs(double tau,
           dy[pv->index_pt_E2+l-2] = twokappam[l]*(2.*l+1.)/(2.*l-1.)/(l-2.)*y[pv->index_pt_E2+l-3]
                                      -(l+3.)*k*cotKgen*y[pv->index_pt_E2+l-2]
                                      -photon_scattering_rate*y[pv->index_pt_E2+l-2]
-                                     -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW: adding -2.beta_dot*y[pv->index_pt_B2+l-2] ; matching C.4 higher l (10/13) Need to establish beta_dot*/
+                                     -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW: adding -2.beta_dot*y[pv->index_pt_B2+l-2] ; matching C.4 higher l (10/13) Need to establish beta_dot*/
         dy[pv->index_pt_B2+l-2] = twokappam[l]*(2.*l+1.)/(2.*l-1.)/(l-2.)*y[pv->index_pt_B2+l-3] /*RCW*/
                                      -(l+3.)*k*cotKgen*y[pv->index_pt_B2+l-2] /*RCW*/
                                      -photon_scattering_rate*y[pv->index_pt_B2+l-2]
-                                     +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2];  /*RCW: copying the closure for B2. Just taking the E2 equation above and substituting in B2*/
+                                     +2.*beta_dot*y[pv->index_pt_E2+l-2];  /*RCW: copying the closure for B2. Just taking the E2 equation above and substituting in B2*/
           break;
         }
       }
@@ -11278,13 +11297,13 @@ int perturbations_derivs(double tau,
           dy[pv->index_pt_E2] = -q_m*2./2./3.*y[pv->index_pt_B2]
             -twokappam[3] /7.*y[pv->index_pt_E2+1]
             -pvecthermo[pth->index_th_dkappa]*(y[pv->index_pt_E2]+_SQRT6_ * P1)
-            -2.*ppt->beta_dot*y[pv->index_pt_B2]; /*RCW (10/13): need to add(?):  -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+            -2.*beta_dot*y[pv->index_pt_B2]; /*RCW (10/13): need to add(?):  -2.*beta_dot*y[pv->index_pt_B2+l-2] */
                                             /*RCW (10/14): changed to index_pt_B2 with NO +l-2*/
 
           dy[pv->index_pt_B2] = q_m*2./2./3.*y[pv->index_pt_E2]
             -twokappam[3] /7.*y[pv->index_pt_B2+1]
             -pvecthermo[pth->index_th_dkappa]*y[pv->index_pt_B2]
-            +2.*ppt->beta_dot*y[pv->index_pt_E2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2];*/
+            +2.*beta_dot*y[pv->index_pt_E2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2];*/
 
           /* l>=3 */
           for (l=3; l < pv->l_max_g; l++) {
@@ -11298,12 +11317,12 @@ int perturbations_derivs(double tau,
               -q_m*2./l/(l+1.)*y[pv->index_pt_B2+l-2]
               -twokappam[l+1] /(2.*l+3.)*y[pv->index_pt_E2+l-1]
               -pvecthermo[pth->index_th_dkappa]*y[pv->index_pt_E2+l-2]
-              -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+              -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
             dy[pv->index_pt_B2+l-2] = twokappam[l] /(2.*l-1.)*y[pv->index_pt_B2+l-3]
               +q_m*2./l/(l+1.)*y[pv->index_pt_E2+l-2]
               -twokappam[l+1] /(2.*l+3.)*y[pv->index_pt_B2+l-1]
               -pvecthermo[pth->index_th_dkappa]*y[pv->index_pt_B2+l-2]
-              +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13):need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
+              +2.*beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13):need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
           }
 
           /* l=lmax */
@@ -11317,13 +11336,13 @@ int perturbations_derivs(double tau,
             +q_m*2./l*y[pv->index_pt_B2+l-2]
             -(l+2.)*k*cotKgen*y[pv->index_pt_E2+l-2]
             -pvecthermo[pth->index_th_dkappa]*y[pv->index_pt_E2+l-2]
-            -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+            -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
 
           dy[pv->index_pt_B2+l-2] = twokappam[l] *(2.*l+1.)/(2.*l-1.)/(l-1.)*y[pv->index_pt_B2+l-3]
             -q_m*2./l*y[pv->index_pt_E2+l-2]
             -(l+2.)*k*cotKgen*y[pv->index_pt_B2+l-2]
             -pvecthermo[pth->index_th_dkappa]*y[pv->index_pt_B2+l-2]
-            +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
+            +2.*beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
 
           break;
         }
@@ -11621,13 +11640,13 @@ int perturbations_derivs(double tau,
           dy[pv->index_pt_E2] = -q_m*4./2./3.*y[pv->index_pt_B2]
              -twokappam[3]/7.*y[pv->index_pt_E2+1]
 	     -photon_scattering_rate*(y[pv->index_pt_E2]+_SQRT6_ * P2)
-       -2.*ppt->beta_dot*y[pv->index_pt_B2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+       -2.*beta_dot*y[pv->index_pt_B2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
                                             /*RCW (10/14): changed to index_pt_B2 with NO +l-2*/
 
           dy[pv->index_pt_B2] = q_m*4./2./3.*y[pv->index_pt_E2]
              -twokappam[3]/7.*y[pv->index_pt_B2+1]
 	     -photon_scattering_rate*y[pv->index_pt_B2]
-             +2.*ppt->beta_dot*y[pv->index_pt_E2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
+             +2.*beta_dot*y[pv->index_pt_E2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
                                                   /*RCW (10/14): changed to index_pt_B2 with NO +l-2*/
 
           /* derivative of E_l^(2), B_l^(2) using (34) of astro-ph/9709066 with l>2 m=2 */
@@ -11637,13 +11656,13 @@ int perturbations_derivs(double tau,
                -q_m*4./l/(l+1.)*y[pv->index_pt_B2+l-2]
                -twokappam[l+1]/(2.*l+3.)*y[pv->index_pt_E2+l-1]
 	       -photon_scattering_rate*y[pv->index_pt_E2+l-2]
-         -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+         -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
 
             dy[pv->index_pt_B2+l-2] = twokappam[l]/(2.*l-1.)*y[pv->index_pt_B2+l-3]
                +q_m*4./l/(l+1.)*y[pv->index_pt_E2+l-2]
                -twokappam[l+1]/(2.*l+3.)*y[pv->index_pt_B2+l-1]
 	       -photon_scattering_rate*y[pv->index_pt_B2+l-2]
-             +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
+             +2.*beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
           }
 
           /* Pitrou-Riazuelo closure relation using (10) of 2005.12119 */
@@ -11653,13 +11672,13 @@ int perturbations_derivs(double tau,
 	    +q_m*2./l*y[pv->index_pt_B2+l-2]
 	    -(l+3.)*k*cotKgen*y[pv->index_pt_E2+l-2]
 	    -photon_scattering_rate*y[pv->index_pt_E2+l-2]
-      -2.*ppt->beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
+      -2.*beta_dot*y[pv->index_pt_B2+l-2]; /*RCW (10/13): need to add(?): -2.*beta_dot*y[pv->index_pt_B2+l-2] */
 
           dy[pv->index_pt_B2+l-2] = twokappam[l]*(2.*l+1.)/(2.*l-1.)/(l-2.)*y[pv->index_pt_B2+l-3]
 	    -q_m*2./l*y[pv->index_pt_E2+l-2]
 	    -(l+3.)*k*cotKgen*y[pv->index_pt_B2+l-2]
 	    -photon_scattering_rate*y[pv->index_pt_B2+l-2]
-      +2.*ppt->beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
+      +2.*beta_dot*y[pv->index_pt_E2+l-2]; /*RCW (10/13): need to add(?): +2.*beta_dot*y[pv->index_pt_E2+l-2] */
           break;
         }
       }

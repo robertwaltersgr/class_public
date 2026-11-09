@@ -143,8 +143,8 @@ struct perturbations
   short has_iso_v;   /**< do we need isocurvature vector mode? */
   short has_oct_v;   /**< do we need (neutrino) octupole vector mode? */
 
-  short has_birefringence; /**RCW (10/14): adding a turn on/off switch < do we need to consider birefringence? */
-  double beta_dot; /**RCW (10/14): adding a beta_dot parameter for birefringence, so it can be read into transfer.c as well */
+  /*short has_birefringence; /**RCW (10/14): adding a turn on/off switch < do we need to consider birefringence? */
+  /*double beta_dot; /**RCW (10/14): adding a beta_dot parameter for birefringence, so it can be read into transfer.c as well */
   /* perturbed recombination */
   /** Do we want to consider perturbed temperature and ionization fraction? */
   short has_perturbed_recombination;

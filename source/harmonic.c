@@ -456,7 +456,7 @@ int harmonic_indices(
       phr->has_te = _FALSE_;
     }
 
-    if (ppt->has_cl_cmb_polarization == _TRUE_) {
+    if (ppt->has_cl_cmb_polarization == _TRUE_) { /*RCW (10/15): adding B channel */
       phr->has_bb = _TRUE_;
       phr->index_ct_bb=index_ct;
       index_ct++;
@@ -464,7 +464,8 @@ int harmonic_indices(
     else {
       phr->has_bb = _FALSE_;
     }
-    if (ppt->has_cl_cmb_polarization == _TRUE_) {
+    
+    if (ppt->has_cl_cmb_polarization == _TRUE_)  { /*RCW (11/15): adding EB channel */
       phr->has_eb = _TRUE_;
      phr->index_ct_eb = index_ct++;
     }
@@ -940,7 +941,8 @@ int harmonic_compute_cl(
   double l;
 
   l = phr->l[index_l];
-
+  /*printf("l = %e\n", l); /*RCW: 10/28: Print statement*/
+  /*printf("I'm in harmonic_compute_cl!\n"); /*RCW: 10/28: Print statement*/
   index_ic1_ic2 = index_symmetric_matrix(index_ic1,index_ic2,phr->ic_size[index_md]);
 
   if (ppt->has_cl_number_count == _TRUE_ && _scalars_) {
@@ -967,9 +969,10 @@ int harmonic_compute_cl(
   }
 
   for (index_q=0; index_q < ptr->q_size; index_q++) {
-
+    /*printf("index_q = %d\n", index_q); /*RCW: 10/28: Print statement*/
     //q = ptr->q[index_q];
     k = ptr->k[index_md][index_q];
+    /*printf("k = %e\n", k); /*RCW: 10/28: Print statement*/
 
     cl_integrand[index_q*cl_integrand_num_columns+0] = k;
 

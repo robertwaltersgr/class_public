@@ -1526,7 +1526,7 @@ int transfer_get_source_correspondence(
 
         if ((ppt->has_cl_cmb_temperature == _TRUE_) && (index_tt == ptr->index_tt_t0))
           tp_of_tt[index_md][index_tt]=ppt->index_tp_t0;
-
+          /*printf("I'm in transfer_get_source_correspondence!\n"); /*RCW: 10/28: Print statement*/
         if ((ppt->has_cl_cmb_temperature == _TRUE_) && (index_tt == ptr->index_tt_t1))
           tp_of_tt[index_md][index_tt]=ppt->index_tp_t1;
 
@@ -1540,7 +1540,7 @@ int transfer_get_source_correspondence(
           tp_of_tt[index_md][index_tt]=ppt->index_tp_x;
 
         if ((ppt->has_cl_cmb_polarization == _TRUE_) && (index_tt == ptr->index_tt_scalar_b)) /*RCW (10/15): following index_tt_e and matching with index_tp_p (look at SCALAR POLARIZATION E choice below) */
-          tp_of_tt[index_md][index_tt]=ppt->index_tp_p;
+          tp_of_tt[index_md][index_tt]=ppt->index_tp_pB;
 
         if ((ppt->has_cl_cmb_lensing_potential == _TRUE_) && (index_tt == ptr->index_tt_lcmb))
           tp_of_tt[index_md][index_tt]=ppt->index_tp_phi_plus_psi;
@@ -4499,6 +4499,7 @@ int transfer_select_radial_function(
 
       if (index_tt == ptr->index_tt_e) {
         *radial_type = SCALAR_POLARISATION_E;
+        /*printf("I'm in transfer_select_radial_function!\n"); /*RCW: 10/28: Print statement*/
       }
       if (index_tt == ptr->index_tt_x) { /*RCW (10/22): adding the indexing for index_tt_x */
         *radial_type = SCALAR_POLARISATION_E;

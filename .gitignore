@@ -20,3 +20,4 @@ doc/manual/latex
 *.egg-info/
 *.npy
 *.npz
+run.log

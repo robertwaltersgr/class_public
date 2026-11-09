@@ -1847,7 +1847,7 @@ int input_read_parameters_general(struct file_content * pfc,
     class_test(flag1==_FALSE_,
                errmsg, "The options for output are {'tCl','pCl','lCl','nCl','dCl','sCl','mPk','mTk','dTk','vTk','Sd','wTk'}, you entered '%s'",string1);
   }
-class_read_double("beta_dot", ppt->beta_dot); /*RCW (10/15): adding ppt-> beta_dot so it can be read from .ini file  */
+  /*class_read_double("beta_dot", ppt->beta_dot); /*RCW (10/15): adding ppt-> beta_dot so it can be read from .ini file  */
   /** 1.a) Terms contributing to the temperature spectrum */
   if (ppt->has_cl_cmb_temperature == _TRUE_) {
     /* Read */
@@ -2399,6 +2399,11 @@ class_read_double("beta_dot", ppt->beta_dot); /*RCW (10/15): adding ppt-> beta_d
     class_read_double("varying_transition_redshift",pba->varconst_transition_redshift);
     break;
   }
+
+  /** Birefringence coupling (RCW 10/29): beta' = g*phi'_scf/2, requires a scalar field */
+  /**class_read_double("birefringence_g",pba->birefringence_g);**/
+  class_read_double("birefringence_A",pba->birefringence_A); /*RCW 11/9 */
+  class_read_double("birefringence_L",pba->birefringence_L); /*RCW 11/9 */ 
 
   if (pba->varconst_dep!=varconst_none){
     /* 10.b) Sensitivity of bbn to a variation of the fine structure constant */
@@ -5840,7 +5845,7 @@ int input_default_params(struct background *pba,
   ppt->switch_lisw = 1;
   ppt->switch_dop = 1;
   ppt->switch_pol = 1;
-  ppt->beta_dot = 0.; /*RCW (10/15): GPT suggested add to set input.c default for beta_dot, so it can be read into transfer.c, perturbations.c*/
+  /*ppt->beta_dot = 0.; /*RCW (10/15): GPT suggested add to set input.c default for beta_dot, so it can be read into transfer.c, perturbations.c*/
   /** 1.a.1) Split value of redshift z at which the isw is considered as late or early */
   ppt->eisw_lisw_split_z = 120;
   /** 1.b) 'nCl' (or 'dCl') case */
@@ -5932,7 +5937,11 @@ int input_default_params(struct background *pba,
   pba->varconst_me = 1.;
   pth->bbn_alpha_sensitivity = 1.;
   pba->varconst_transition_redshift = 50.;
-
+  /*RCW 11/9 sample alpha function A and L*/
+  /**pba->birefringence_g = 0.; **/
+  pba->birefringence_A = 1.; /*RCW 11/9: A= 0 gives LCDM. */
+  pba->birefringence_L = 1.e-2; /*RCW 11/9: L is a wavenumber like parameter ~ 1/Mpc? */
+                         
   /**
    * Default to input_read_parameters_species
    */
