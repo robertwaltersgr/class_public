@@ -8541,7 +8541,7 @@ int perturbations_sources(
          plus sign to comply with the 'historical convention'
          established in CMBFAST and CAMB. */
       double beta = background_alpha(pba, tau, pba->conformal_age); /*RCW: 11/9 calling in alpha function from background.c*/
-      _set_source_(ppt->index_tp_pB) = -_SQRT6_ * g * P *sin(2.*beta); /*RCW: 11/9: adding birefringence term to B-mode source, sin(2beta) from background.c alpha*/; 
+      _set_source_(ppt->index_tp_pB) = _SQRT6_ * g * P *sin(2.*beta); /*RCW: 11/9: adding birefringence term to B-mode source, sin(2beta) from background.c alpha*/; 
     }
     if (ppt->has_source_x == _TRUE_) { /*RCW (10/22) adding X mode, copying tp_p for E mode*/
 

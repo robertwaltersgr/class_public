@@ -5939,7 +5939,7 @@ int input_default_params(struct background *pba,
   pba->varconst_transition_redshift = 50.;
   /*RCW 11/9 sample alpha function A and L*/
   /**pba->birefringence_g = 0.; **/
-  pba->birefringence_A = 1.; /*RCW 11/9: A= 0 gives LCDM. */
+  pba->birefringence_A = 1.e-3; /*RCW 11/9: A= 0 gives LCDM. */
   pba->birefringence_L = 1.e-2; /*RCW 11/9: L is a wavenumber like parameter ~ 1/Mpc? */
                          
   /**
